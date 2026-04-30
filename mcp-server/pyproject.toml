@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memento-mcp"
+version = "0.1.0"
+description = "MCP Memory Server (phase 1)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=1.2",
+    "psycopg[binary]>=3.2",
+    "python-dotenv>=1.0",
+    "pydantic-settings>=2.0",
+    "alembic>=1.13",
+]
+
+[project.scripts]
+memento-mcp = "memento_mcp.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,2 @@
+[console_scripts]
+memento-mcp = memento_mcp.server:main

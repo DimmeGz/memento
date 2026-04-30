@@ -1,1 +1,13 @@
+.env
+config.local.toml
+mcp-server/.venv/
+**/.venv/
+.pip_extract/
+.virtualenv-app-data/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .cursor/
