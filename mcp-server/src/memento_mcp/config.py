@@ -20,6 +20,8 @@ DEFAULT_CORE_CONTEXT: dict[str, object] = {
 
 @dataclass(frozen=True, slots=True)
 class Settings:
+    """project_root is the client workspace; secrets load from MEMENTO_ENV_ROOT."""
+
     workspace_root: Path
     database_url: str
     user_id: str
@@ -35,13 +37,13 @@ def _die(message: str, *, code: int = 1) -> None:
     sys.exit(code)
 
 
-def _workspace_root() -> Path:
-    raw = os.environ.get("MEMENTO_WORKSPACE_ROOT", "").strip()
+def _resolve_root(var_name: str) -> Path:
+    raw = os.environ.get(var_name, "").strip()
     if not raw:
-        _die("MEMENTO_WORKSPACE_ROOT is required and must point to the workspace root.")
+        _die(f"{var_name} is required and must point to an existing directory.")
     path = Path(raw).expanduser().resolve()
     if not path.is_dir():
-        _die(f"MEMENTO_WORKSPACE_ROOT is not a directory: {path}")
+        _die(f"{var_name} is not a directory: {path}")
     return path
 
 
@@ -58,14 +60,16 @@ def _merge_core_context(root: Path) -> dict[str, object]:
 
 
 def _load_settings_impl() -> Settings:
-    root = _workspace_root()
-    load_dotenv(root / ".env", override=False)
+    env_root = _resolve_root("MEMENTO_ENV_ROOT")
+    project_root = _resolve_root("MEMENTO_WORKSPACE_ROOT")
+
+    load_dotenv(env_root / ".env", override=False)
 
     database_url = os.environ.get("DATABASE_URL", "").strip()
     if not database_url:
         _die("DATABASE_URL is required in the environment after loading .env.")
 
-    local_path = root / "config.local.toml"
+    local_path = project_root / "config.local.toml"
     if not local_path.is_file():
         _die(f"Missing config.local.toml at {local_path}")
 
@@ -81,10 +85,10 @@ def _load_settings_impl() -> Settings:
     if not user_id or not project_id:
         _die("config.local.toml [user].id and [project].id must be non-empty after strip.")
 
-    core_context = _merge_core_context(root)
+    core_context = _merge_core_context(project_root)
 
     return Settings(
-        workspace_root=root,
+        workspace_root=project_root,
         database_url=database_url,
         user_id=user_id,
         project_id=project_id,
