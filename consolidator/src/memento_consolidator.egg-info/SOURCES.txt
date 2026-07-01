@@ -1,0 +1,16 @@
+README.md
+pyproject.toml
+src/memento_consolidator/__init__.py
+src/memento_consolidator/models.py
+src/memento_consolidator/ollama_client.py
+src/memento_consolidator/qdrant_store.py
+src/memento_consolidator/run.py
+src/memento_consolidator/settings.py
+src/memento_consolidator.egg-info/PKG-INFO
+src/memento_consolidator.egg-info/SOURCES.txt
+src/memento_consolidator.egg-info/dependency_links.txt
+src/memento_consolidator.egg-info/entry_points.txt
+src/memento_consolidator.egg-info/requires.txt
+src/memento_consolidator.egg-info/top_level.txt
+tests/test_dedup.py
+tests/test_models.py

@@ -1,0 +1,2 @@
+[console_scripts]
+memento-consolidator = memento_consolidator.run:main
