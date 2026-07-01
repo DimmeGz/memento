@@ -121,10 +121,12 @@ effective_importance = importance * decay_factor(days_since_created)
 
 ### MCP Tools
 
-- `remember(fact, user_id, project_id, scope, type)` — явний тригер запису факту
-- `recall(query, user_id, project_id)` — hybrid RAG пошук (user + project scope)
-- `get_core_context(user_id, project_id)` — базові факти, завжди в промпті
-- `log_message(message, role, user_id, project_id, session_id)` — логування сирих повідомлень
+- `remember(fact, scope, type)` — явний тригер запису факту
+- `recall(query)` — hybrid RAG пошук (user + project scope)
+- `get_core_context()` — базові факти, завжди в промпті
+- `log_message(message, role, session_id)` — логування сирих повідомлень
+
+> `user_id` і `project_id` не передаються як параметри інструментів — вони беруться з `config.local.toml` через `Settings`. Це ізолює ідентифікатори від MCP-інтерфейсу і унеможливлює їх підміну клієнтом.
 
 ### `get_core_context()` — обмеження
 

@@ -5,10 +5,7 @@ Summary: MCP Memory Server (phase 1)
 Requires-Python: >=3.11
 Description-Content-Type: text/markdown
 Requires-Dist: mcp>=1.2
-Requires-Dist: psycopg[binary]>=3.2
-Requires-Dist: python-dotenv>=1.0
-Requires-Dist: pydantic-settings>=2.0
-Requires-Dist: alembic>=1.13
+Requires-Dist: memento-core>=0.1.0
 
 # memento-mcp
 
@@ -17,15 +14,16 @@ Stdio MCP server that logs chat turns to PostgreSQL (`log_message`) and exposes 
 ## Prerequisites
 
 - Python **3.11+**
-- CLI **`virtualenv`** on your `PATH` (installed by you or your operator — do not `pip install virtualenv` inside this repo as part of the phase-1 plan).
 - A running PostgreSQL instance.
 - Two roots are always required at runtime (see below): **`MEMENTO_ENV_ROOT`** (memento clone with **`.env`**) and **`MEMENTO_WORKSPACE_ROOT`** (the project you are working in with **`config.local.toml`**).
+
+Shared database code lives in **`../shared/memento_core`** (`memento-core` package). Install it **before** this package.
 
 ## Environment variables
 
 | Variable | Required | Purpose |
 |----------|----------|---------|
-| **`MEMENTO_ENV_ROOT`** | yes | Absolute path to the **memento** repository root. **`load_dotenv`** reads **`{MEMENTO_ENV_ROOT}/.env`** (`DATABASE_URL`). |
+| **`MEMENTO_ENV_ROOT`** | yes | Absolute path to the **memento** repository root. Root **`.env`** is loaded via **`memento_core.load_memento_env()`** (`DATABASE_URL` and other vars). |
 | **`MEMENTO_WORKSPACE_ROOT`** | yes | Absolute path to the **current client project** root. Reads **`config.local.toml`** and optional **`config.toml`** (`[core_context]`). |
 
 When you develop **inside the memento repo itself**, set **both** variables to the **same** absolute path (the memento root).
@@ -38,7 +36,7 @@ When you use memento-mcp from **another repository**, set **`MEMENTO_ENV_ROOT`**
 
 | File | Purpose |
 |------|---------|
-| **`.env`** | **`DATABASE_URL`** (gitignored in memento — copy from **`.env.example`**) |
+| **`.env`** | **`DATABASE_URL`** and optional vars — copy from repository **`.env.example`** (gitignored). |
 
 **Under `MEMENTO_WORKSPACE_ROOT` (client project)**
 
@@ -49,51 +47,53 @@ When you use memento-mcp from **another repository**, set **`MEMENTO_ENV_ROOT`**
 
 ## Setup
 
-From the memento repository root (`$MEMENTO`):
+Use one virtualenv at the **memento repository root** (`python3 -m venv venv`, then **`source venv/bin/activate`**). Do not install dependencies into the system interpreter.
+
+From **`$MEMENTO`** (repo root):
 
 ```bash
-cd "$MEMENTO/mcp-server"
-virtualenv .venv
-source .venv/bin/activate   # Windows: .\.venv\Scripts\activate
-pip install -e .
+python3 -m venv venv
+source venv/bin/activate
+pip install -e ./shared/memento_core
+pip install -e ./mcp-server
 ```
 
-Confirm the interpreter is the venv before running **`pip`** or **`python`**:
+Confirm the interpreter is the venv:
 
 ```bash
-python -c 'import sys; assert ".venv" in sys.prefix'
+python -c 'import sys; assert "venv" in sys.prefix'
 ```
 
-Apply migrations (**`DATABASE_URL`** comes from **`$MEMENTO/.env`**):
+Apply migrations (**`DATABASE_URL`** must be available — export from **`$MEMENTO/.env`** or load manually):
 
 ```bash
-cd "$MEMENTO/mcp-server"
-source .venv/bin/activate
-export DATABASE_URL="$(grep '^DATABASE_URL=' "$MEMENTO/.env" | sed 's/^DATABASE_URL=//')"
+cd "$MEMENTO/shared/memento_core"
+source "$MEMENTO/venv/bin/activate"
+set -a && source "$MEMENTO/.env" && set +a
 alembic upgrade head
 ```
 
-`alembic/env.py` rewrites `postgresql://` and `postgres://` URLs to **`postgresql+psycopg://`** so migrations use the installed **psycopg** (v3) driver instead of **psycopg2**.
+`alembic/env.py` rewrites `postgresql://` and `postgres://` URLs to **`postgresql+psycopg://`** so migrations use **psycopg** (v3).
 
 ## Running
 
 ```bash
 export MEMENTO_ENV_ROOT="$MEMENTO"
 export MEMENTO_WORKSPACE_ROOT="$MEMENTO"
-"$MEMENTO/mcp-server/.venv/bin/python" -m memento_mcp
+"$MEMENTO/venv/bin/python" -m memento_mcp
 ```
 
 If either variable is missing or not a directory, the process exits with a non-zero status and an English message on stderr (no Python traceback).
 
 ## Cursor / MCP client (`mcp.json`)
 
-Use an **absolute path** to the venv Python so the client does not rely on a global interpreter. **`env`** must include **both** roots:
+Use an **absolute path** to the venv Python:
 
 ```json
 {
   "mcpServers": {
     "memento-memory": {
-      "command": "/absolute/path/to/memento/mcp-server/.venv/bin/python",
+      "command": "/absolute/path/to/memento/venv/bin/python",
       "args": ["-m", "memento_mcp"],
       "env": {
         "MEMENTO_ENV_ROOT": "/absolute/path/to/memento",
@@ -104,11 +104,7 @@ Use an **absolute path** to the venv Python so the client does not rely on a glo
 }
 ```
 
-For **memento-only** use, set **`MEMENTO_WORKSPACE_ROOT`** and **`MEMENTO_ENV_ROOT`** to the **same** memento path.
-
-Some Cursor builds expand **`${workspaceFolder}`** inside MCP **`env`** values; if yours does, you can set **`MEMENTO_WORKSPACE_ROOT`** to **`${workspaceFolder}`** so the client project tracks the open workspace. If substitution is not supported, use an absolute path to that project’s root.
-
-**`DATABASE_URL`** is loaded only from **`$MEMENTO_ENV_ROOT/.env`**. **`user_id`** / **`project_id`** come only from **`$MEMENTO_WORKSPACE_ROOT/config.local.toml`**, not from **`mcp.json`**.
+**`DATABASE_URL`** is loaded from **`$MEMENTO_ENV_ROOT/.env`**. **`user_id`** / **`project_id`** come only from **`$MEMENTO_WORKSPACE_ROOT/config.local.toml`**, not from **`mcp.json`**.
 
 ## Tools (phase 1)
 
@@ -128,3 +124,7 @@ FROM conversations ORDER BY created_at DESC LIMIT 5;
 SELECT id, conversation_id, role, left(content, 80), created_at
 FROM messages ORDER BY created_at DESC LIMIT 10;
 ```
+
+## Consolidator
+
+Background worker and Qdrant pipeline live in **`../consolidator`**. See **`../consolidator/README.md`** and repository **`.env.example`**.

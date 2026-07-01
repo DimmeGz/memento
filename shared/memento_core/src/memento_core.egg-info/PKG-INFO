@@ -1,0 +1,28 @@
+Metadata-Version: 2.4
+Name: memento-core
+Version: 0.1.0
+Summary: Shared PostgreSQL persistence and migrations for memento
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: psycopg[binary]>=3.2
+Requires-Dist: python-dotenv>=1.0
+Requires-Dist: alembic>=1.13
+Requires-Dist: SQLAlchemy>=2.0
+
+# memento-core
+
+Shared database access and Alembic migrations for the memento memory stack.
+
+Install inside an activated repo-root virtualenv:
+
+```bash
+pip install -e ./shared/memento_core
+```
+
+Run migrations from this directory with `DATABASE_URL` set (after loading root `.env` via `MEMENTO_ENV_ROOT`):
+
+```bash
+export MEMENTO_ENV_ROOT=/absolute/path/to/memento
+set -a && source "$MEMENTO_ENV_ROOT/.env" && set +a
+cd shared/memento_core && alembic upgrade head
+```

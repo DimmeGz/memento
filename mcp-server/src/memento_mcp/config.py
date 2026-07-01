@@ -8,7 +8,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-from dotenv import load_dotenv
+from memento_core.env_loader import load_memento_env, require_database_url
 
 
 DEFAULT_CORE_CONTEXT: dict[str, object] = {
@@ -27,6 +27,8 @@ class Settings:
     user_id: str
     project_id: str
     core_context: dict[str, object]
+    qdrant_url: str
+    qdrant_collection_prefix: str
 
 
 _settings: Settings | None = None
@@ -60,14 +62,12 @@ def _merge_core_context(root: Path) -> dict[str, object]:
 
 
 def _load_settings_impl() -> Settings:
-    env_root = _resolve_root("MEMENTO_ENV_ROOT")
+    _ = _resolve_root("MEMENTO_ENV_ROOT")
     project_root = _resolve_root("MEMENTO_WORKSPACE_ROOT")
 
-    load_dotenv(env_root / ".env", override=False)
+    load_memento_env()
 
-    database_url = os.environ.get("DATABASE_URL", "").strip()
-    if not database_url:
-        _die("DATABASE_URL is required in the environment after loading .env.")
+    database_url = require_database_url()
 
     local_path = project_root / "config.local.toml"
     if not local_path.is_file():
@@ -93,6 +93,8 @@ def _load_settings_impl() -> Settings:
         user_id=user_id,
         project_id=project_id,
         core_context=core_context,
+        qdrant_url=os.environ.get("QDRANT_URL", "http://127.0.0.1:6333").strip(),
+        qdrant_collection_prefix=os.environ.get("QDRANT_COLLECTION_PREFIX", "facts").strip(),
     )
 
 

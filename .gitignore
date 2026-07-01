@@ -1,5 +1,6 @@
 .env
 config.local.toml
+venv/
 mcp-server/.venv/
 **/.venv/
 .pip_extract/
