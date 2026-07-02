@@ -1,6 +1,6 @@
 # memento-mcp
 
-Stdio MCP server that logs chat turns to PostgreSQL (`log_message`) and exposes stub tools for future memory features.
+Stdio MCP server that logs chat turns to PostgreSQL and serves memory tools backed by Qdrant and Ollama embeddings.
 
 ## Prerequisites
 
@@ -8,14 +8,14 @@ Stdio MCP server that logs chat turns to PostgreSQL (`log_message`) and exposes 
 - A running PostgreSQL instance.
 - Two roots are always required at runtime (see below): **`MEMENTO_ENV_ROOT`** (memento clone with **`.env`**) and **`MEMENTO_WORKSPACE_ROOT`** (the project you are working in with **`config.local.toml`**).
 
-Shared database code lives in **`../shared/memento_core`** (`memento-core` package). Install it **before** this package.
+Shared database code lives in **`../shared/memento_core`** (`memento-core` package). Vector layer lives in **`../shared/memento_vectors`** (`memento-vectors`). Install both **before** this package.
 
 ## Environment variables
 
 | Variable | Required | Purpose |
 |----------|----------|---------|
 | **`MEMENTO_ENV_ROOT`** | yes | Absolute path to the **memento** repository root. Root **`.env`** is loaded via **`memento_core.load_memento_env()`** (`DATABASE_URL` and other vars). |
-| **`MEMENTO_WORKSPACE_ROOT`** | yes | Absolute path to the **current client project** root. Reads **`config.local.toml`** and optional **`config.toml`** (`[core_context]`). |
+| **`MEMENTO_WORKSPACE_ROOT`** | yes | Absolute path to the **current client project** root. Reads **`config.local.toml`** and optional **`config.toml`** (`[core_context]`, `[recall]`). |
 
 When you develop **inside the memento repo itself**, set **both** variables to the **same** absolute path (the memento root).
 
@@ -27,14 +27,14 @@ When you use memento-mcp from **another repository**, set **`MEMENTO_ENV_ROOT`**
 
 | File | Purpose |
 |------|---------|
-| **`.env`** | **`DATABASE_URL`** and optional vars — copy from repository **`.env.example`** (gitignored). |
+| **`.env`** | **`DATABASE_URL`**, **`QDRANT_URL`**, **`OLLAMA_BASE_URL`**, **`OLLAMA_EMBEDDING_MODEL`**, and optional vars — copy from repository **`.env.example`** (gitignored). |
 
 **Under `MEMENTO_WORKSPACE_ROOT` (client project)**
 
 | File | Purpose |
 |------|---------|
 | **`config.local.toml`** | **`[user].id`**, **`[project].id`** (per project; gitignored in templates) |
-| **`config.toml`** | Optional **`[core_context]`** |
+| **`config.toml`** | Optional **`[core_context]`**, **`[recall]`** |
 
 ## Setup
 
@@ -46,6 +46,7 @@ From **`$MEMENTO`** (repo root):
 python3 -m venv venv
 source venv/bin/activate
 pip install -e ./shared/memento_core
+pip install -e ./shared/memento_vectors
 pip install -e ./mcp-server
 ```
 
@@ -97,12 +98,14 @@ Use an **absolute path** to the venv Python:
 
 **`DATABASE_URL`** is loaded from **`$MEMENTO_ENV_ROOT/.env`**. **`user_id`** / **`project_id`** come only from **`$MEMENTO_WORKSPACE_ROOT/config.local.toml`**, not from **`mcp.json`**.
 
-## Tools (phase 1)
+## Tools
 
 | Tool | Behaviour |
 |------|-----------|
 | **`log_message`** | Validates **`message`**, **`role`** (`user` \| `assistant`), **`session_id`**; upserts **`conversations`** on **`(user_id, project_id, session_id)`** with **`status='pending'`** for new rows; **`ON CONFLICT`** updates **`updated_at`** only; inserts **`messages`**. |
-| **`remember`**, **`recall`**, **`get_core_context`** | Return **`[NOT_IMPLEMENTED] …`** (argument validation only where specified; no SQL). |
+| **`remember`** | Embeds **`fact`** via Ollama, deduplicates near-identical vectors, upserts into Qdrant with **`scope`** (`user` \| `project`) and **`type`** (`episodic` \| `semantic` \| `procedural`). Returns **`ok`** or **`already known`**. |
+| **`recall`** | Vector search over user-scoped and project-scoped facts; merges with RRF; updates **`last_accessed_at`**; returns formatted bullet list. |
+| **`get_core_context`** | Returns high-importance **`semantic`** and **`procedural`** facts for user and project (limits and threshold from **`[core_context]`** in **`config.toml`**). |
 
 ## Acceptance checks
 

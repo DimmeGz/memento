@@ -7,7 +7,7 @@ from typing import Any
 
 import httpx
 
-from memento_consolidator.models import ExtractedFact, parse_facts_json
+from memento_vectors.models import ExtractedFact, parse_facts_json
 
 _SYSTEM_PROMPT = """You are a memory consolidation assistant. Given a dialogue transcript, extract \
 standalone factual memories worth storing long-term.
@@ -33,8 +33,8 @@ class OllamaClient:
         self,
         *,
         base_url: str,
-        chat_model: str,
         embedding_model: str,
+        chat_model: str | None = None,
         timeout_s: float = 600.0,
     ) -> None:
         self._chat_model = chat_model
@@ -51,6 +51,8 @@ class OllamaClient:
         self.close()
 
     def extract_facts(self, transcript: str) -> list[ExtractedFact]:
+        if not self._chat_model:
+            raise RuntimeError("chat_model is required for extract_facts().")
         body: dict[str, Any] = {
             "model": self._chat_model,
             "messages": [

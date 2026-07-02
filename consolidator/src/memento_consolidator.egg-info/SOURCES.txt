@@ -1,9 +1,6 @@
 README.md
 pyproject.toml
 src/memento_consolidator/__init__.py
-src/memento_consolidator/models.py
-src/memento_consolidator/ollama_client.py
-src/memento_consolidator/qdrant_store.py
 src/memento_consolidator/run.py
 src/memento_consolidator/settings.py
 src/memento_consolidator.egg-info/PKG-INFO

@@ -2,3 +2,7 @@
 user_limit = 10
 project_limit = 10
 importance_threshold = 0.75
+
+[recall]
+limit = 10
+rrf_k = 60

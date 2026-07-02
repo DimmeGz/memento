@@ -6,6 +6,7 @@ Install (repo-root `venv` activated):
 
 ```bash
 pip install -e ./shared/memento_core
+pip install -e ./shared/memento_vectors
 pip install -e ./consolidator
 ```
 
@@ -23,7 +24,7 @@ Optional flags: `--reclaim-stale`, `--batch-size`, `--stale-minutes`.
 
 ## Smoke checklist
 
-1. Root **`venv`** active; **`pip install -e ./shared/memento_core`** then **`pip install -e ./consolidator`** (and MCP if needed).
+1. Root **`venv`** active; **`pip install -e ./shared/memento_core`**, **`pip install -e ./shared/memento_vectors`**, then **`pip install -e ./consolidator`** (and MCP if needed).
 2. PostgreSQL up; **`alembic upgrade head`** from **`shared/memento_core`** with **`DATABASE_URL`** loaded from root **`.env`**.
 3. Qdrant listening on **`QDRANT_URL`**; Ollama running with **`OLLAMA_CONSOLIDATION_MODEL`** and **`OLLAMA_EMBEDDING_MODEL`** pulled locally.
 4. Append at least one turn via MCP **`log_message`** so a **`pending`** row exists.

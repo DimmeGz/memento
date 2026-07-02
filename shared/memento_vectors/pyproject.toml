@@ -3,22 +3,19 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "memento-mcp"
+name = "memento-vectors"
 version = "0.1.0"
-description = "MCP Memory Server"
+description = "Shared Ollama embeddings and Qdrant facts store for memento"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "mcp>=1.2",
-    "memento-core>=0.1.0",
-    "memento-vectors>=0.1.0",
+    "qdrant-client>=1.11",
+    "httpx>=0.27",
+    "pydantic>=2.0",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
-
-[project.scripts]
-memento-mcp = "memento_mcp.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

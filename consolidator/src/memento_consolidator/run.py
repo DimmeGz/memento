@@ -18,8 +18,8 @@ from memento_core.db.repository import (
 )
 from memento_core.env_loader import load_memento_env
 
-from memento_consolidator.ollama_client import OllamaClient
-from memento_consolidator.qdrant_store import FactsStore
+from memento_vectors.facts_store import FactsStore
+from memento_vectors.ollama_client import OllamaClient
 from memento_consolidator.settings import load_consolidator_settings
 
 

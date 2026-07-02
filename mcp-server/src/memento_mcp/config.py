@@ -17,6 +17,11 @@ DEFAULT_CORE_CONTEXT: dict[str, object] = {
     "importance_threshold": 0.75,
 }
 
+DEFAULT_RECALL: dict[str, object] = {
+    "limit": 10,
+    "rrf_k": 60,
+}
+
 
 @dataclass(frozen=True, slots=True)
 class Settings:
@@ -27,8 +32,11 @@ class Settings:
     user_id: str
     project_id: str
     core_context: dict[str, object]
+    recall: dict[str, object]
     qdrant_url: str
     qdrant_collection_prefix: str
+    ollama_base_url: str
+    ollama_embedding_model: str
 
 
 _settings: Settings | None = None
@@ -61,6 +69,25 @@ def _merge_core_context(root: Path) -> dict[str, object]:
     return merged
 
 
+def _merge_recall(root: Path) -> dict[str, object]:
+    merged = dict(DEFAULT_RECALL)
+    cfg = root / "config.toml"
+    if cfg.is_file():
+        with cfg.open("rb") as fh:
+            data = tomllib.load(fh)
+        section = data.get("recall")
+        if isinstance(section, dict):
+            merged.update(section)
+    return merged
+
+
+def _require_env(name: str) -> str:
+    value = os.environ.get(name, "").strip()
+    if not value:
+        _die(f"{name} is required (set it in {os.environ.get('MEMENTO_ENV_ROOT', '')}/.env).")
+    return value
+
+
 def _load_settings_impl() -> Settings:
     _ = _resolve_root("MEMENTO_ENV_ROOT")
     project_root = _resolve_root("MEMENTO_WORKSPACE_ROOT")
@@ -86,6 +113,7 @@ def _load_settings_impl() -> Settings:
         _die("config.local.toml [user].id and [project].id must be non-empty after strip.")
 
     core_context = _merge_core_context(project_root)
+    recall = _merge_recall(project_root)
 
     return Settings(
         workspace_root=project_root,
@@ -93,8 +121,11 @@ def _load_settings_impl() -> Settings:
         user_id=user_id,
         project_id=project_id,
         core_context=core_context,
+        recall=recall,
         qdrant_url=os.environ.get("QDRANT_URL", "http://127.0.0.1:6333").strip(),
         qdrant_collection_prefix=os.environ.get("QDRANT_COLLECTION_PREFIX", "facts").strip(),
+        ollama_base_url=os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434").strip(),
+        ollama_embedding_model=_require_env("OLLAMA_EMBEDDING_MODEL"),
     )
 
 

@@ -62,6 +62,7 @@ Planned search: hybrid BM25 + vector retrieval with Reciprocal Rank Fusion (RRF)
 ```
 memento/
 ├── shared/memento_core/   # PostgreSQL access, Alembic migrations
+├── shared/memento_vectors/ # Ollama embeddings, Qdrant facts store, RRF
 ├── mcp-server/            # memento-mcp — MCP server
 ├── consolidator/          # memento-consolidator — background worker
 ├── config.toml            # [core_context] limits (committed)
@@ -75,13 +76,14 @@ Package-specific setup and usage:
 - [mcp-server/README.md](mcp-server/README.md)
 - [consolidator/README.md](consolidator/README.md)
 - [shared/memento_core/README.md](shared/memento_core/README.md)
+- [shared/memento_vectors/README.md](shared/memento_vectors/README.md)
 
 ## Prerequisites
 
 - Python **3.11+**
 - Running **PostgreSQL** instance
-- **Qdrant** (for consolidator)
-- **Ollama** with consolidation and embedding models pulled locally (for consolidator)
+- **Qdrant** (for consolidator and MCP memory tools)
+- **Ollama** with consolidation and embedding models pulled locally (for consolidator and MCP)
 
 ## Quick start
 
@@ -91,6 +93,7 @@ Use one virtualenv at the repository root:
 python3 -m venv venv
 source venv/bin/activate
 pip install -e ./shared/memento_core
+pip install -e ./shared/memento_vectors
 pip install -e ./mcp-server
 pip install -e ./consolidator
 ```
@@ -147,20 +150,20 @@ See [.env.example](.env.example). Key entries:
 | Variable | Required by | Description |
 |----------|-------------|-------------|
 | `DATABASE_URL` | MCP, consolidator | PostgreSQL connection string |
-| `QDRANT_URL` | consolidator | Qdrant HTTP endpoint |
-| `QDRANT_COLLECTION_PREFIX` | consolidator | Collection name prefix (default `facts`) |
-| `OLLAMA_BASE_URL` | consolidator | Ollama HTTP endpoint |
+| `QDRANT_URL` | MCP, consolidator | Qdrant HTTP endpoint |
+| `QDRANT_COLLECTION_PREFIX` | MCP, consolidator | Collection name prefix (default `facts`) |
+| `OLLAMA_BASE_URL` | MCP, consolidator | Ollama HTTP endpoint |
 | `OLLAMA_CONSOLIDATION_MODEL` | consolidator | Chat model for fact extraction |
-| `OLLAMA_EMBEDDING_MODEL` | consolidator | Embedding model |
+| `OLLAMA_EMBEDDING_MODEL` | MCP, consolidator | Embedding model |
 
 ## MCP tools
 
-| Tool | Phase 1 status |
-|------|----------------|
+| Tool | Status |
+|------|--------|
 | `log_message(message, role, session_id)` | Implemented — upserts conversation, inserts message row |
-| `remember(fact, scope, type)` | Stub — returns `[NOT_IMPLEMENTED]` |
-| `recall(query)` | Stub — returns `[NOT_IMPLEMENTED]` |
-| `get_core_context()` | Stub — returns `[NOT_IMPLEMENTED]` |
+| `remember(fact, scope, type)` | Implemented — embed, dedup, upsert to Qdrant |
+| `recall(query)` | Implemented — vector search (user + project), RRF merge |
+| `get_core_context()` | Implemented — high-importance semantic/procedural facts |
 
 ### Cursor integration
 
@@ -187,7 +190,7 @@ Add to your MCP config (use absolute paths):
 |-----------|--------|
 | Dialogue logging (MCP → PostgreSQL) | Done |
 | Consolidator (PostgreSQL → Ollama → Qdrant) | Done |
-| `recall`, `remember`, `get_core_context` | Planned (phase 2) |
+| `recall`, `remember`, `get_core_context` | Done |
 | Hybrid BM25 + vector search | Planned |
 | Shared scope, fact invalidation, activity decay | Roadmap |
 

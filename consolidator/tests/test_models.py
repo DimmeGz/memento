@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from memento_consolidator.models import ExtractedFact, parse_facts_json
+from memento_vectors.models import ExtractedFact, parse_facts_json
 
 
 def test_parse_facts_json_array() -> None:
