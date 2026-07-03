@@ -65,6 +65,7 @@ memento/
 ├── shared/memento_vectors/ # Ollama embeddings, Qdrant facts store, RRF
 ├── mcp-server/            # memento-mcp — MCP server
 ├── consolidator/          # memento-consolidator — background worker
+├── integrations/          # Cursor / Claude Code hook templates
 ├── config.toml            # [core_context] limits (committed)
 ├── config.local.toml      # [user].id, [project].id (gitignored)
 ├── .env                   # secrets and service URLs (gitignored)
@@ -184,6 +185,10 @@ Add to your MCP config (use absolute paths):
 }
 ```
 
+### Client integrations (hooks)
+
+Deterministic logging and core-context injection can run via IDE hooks instead of agent rules. See [integrations/README.md](integrations/README.md) for Cursor and Claude Code setup.
+
 ## Implementation status
 
 | Component | Status |
@@ -191,6 +196,7 @@ Add to your MCP config (use absolute paths):
 | Dialogue logging (MCP → PostgreSQL) | Done |
 | Consolidator (PostgreSQL → Ollama → Qdrant) | Done |
 | `recall`, `remember`, `get_core_context` | Done |
+| Client integrations (CLI, HTTP webhook, hooks) | Done |
 | Hybrid BM25 + vector search | Planned |
 | Shared scope, fact invalidation, activity decay | Roadmap |
 

@@ -1,2 +1,3 @@
 [console_scripts]
+memento = memento_mcp.cli:main
 memento-mcp = memento_mcp.server:main

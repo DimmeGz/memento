@@ -2,9 +2,12 @@ README.md
 pyproject.toml
 src/memento_mcp/__init__.py
 src/memento_mcp/__main__.py
+src/memento_mcp/cli.py
 src/memento_mcp/config.py
+src/memento_mcp/http_app.py
 src/memento_mcp/memory.py
 src/memento_mcp/server.py
+src/memento_mcp/validation.py
 src/memento_mcp.egg-info/PKG-INFO
 src/memento_mcp.egg-info/SOURCES.txt
 src/memento_mcp.egg-info/dependency_links.txt
@@ -13,5 +16,11 @@ src/memento_mcp.egg-info/requires.txt
 src/memento_mcp.egg-info/top_level.txt
 src/memento_mcp/db/__init__.py
 src/memento_mcp/db/repository.py
+src/memento_mcp/services/__init__.py
+src/memento_mcp/services/context.py
+src/memento_mcp/services/logging.py
 src/memento_mcp/tools/__init__.py
+tests/test_cli.py
+tests/test_http_app.py
 tests/test_memory_format.py
+tests/test_validation.py

@@ -9,6 +9,10 @@ Requires-Dist: memento-core>=0.1.0
 Requires-Dist: memento-vectors>=0.1.0
 Provides-Extra: dev
 Requires-Dist: pytest>=8; extra == "dev"
+Requires-Dist: httpx>=0.27; extra == "dev"
+Provides-Extra: http
+Requires-Dist: starlette>=0.40; extra == "http"
+Requires-Dist: uvicorn>=0.30; extra == "http"
 
 # memento-mcp
 
@@ -88,6 +92,59 @@ export MEMENTO_WORKSPACE_ROOT="$MEMENTO"
 ```
 
 If either variable is missing or not a directory, the process exits with a non-zero status and an English message on stderr (no Python traceback).
+
+## CLI (`memento`)
+
+Entry point for deterministic operations (logging, core context, HTTP webhook):
+
+```bash
+export MEMENTO_ENV_ROOT="$MEMENTO"
+export MEMENTO_WORKSPACE_ROOT="$MEMENTO"
+
+# Log a message
+memento log --role user --session-id SESSION_ID --message "Hello"
+
+# Print core context (plain text)
+memento core-context
+
+# Print core context as JSON for hooks
+memento core-context --json
+
+# Start HTTP webhook (requires pip install "memento-mcp[http]")
+memento serve --host 127.0.0.1 --port 8765
+```
+
+Exit codes: `0` ok, `1` validation/config error, `2` usage error.
+
+## HTTP webhook
+
+Optional HTTP server for Claude Code `type: http` hooks, OpenWebUI sidecar, or team deployment.
+
+Install: `pip install "memento-mcp[http]"`
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | Health check |
+| `GET` | `/v1/core-context` | Returns `{"additional_context":"..."}` |
+| `POST` | `/v1/log` | Body: `{"message","role","session_id"}` |
+| `POST` | `/v1/hooks/log-user` | Raw hook JSON → extracts `prompt` + session id |
+| `POST` | `/v1/hooks/log-assistant` | Raw hook JSON → extracts assistant text + session id |
+
+### HTTP environment variables
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `MEMENTO_HOOK_TOKEN` | no | If set, requires `Authorization: Bearer …` on all endpoints except `/health` |
+| `MEMENTO_HTTP_HOST` | no | Default bind host for `memento serve` (default `127.0.0.1`) |
+| `MEMENTO_HTTP_PORT` | no | Default port for `memento serve` (default `8765`) |
+
+If `MEMENTO_HOOK_TOKEN` is empty, only `127.0.0.1` / `::1` clients are allowed (local dev).
+
+Settings are resolved once at server startup (`get_settings()` fail-fast before `uvicorn.run`).
+
+## Client hook templates
+
+See [`../integrations/README.md`](../integrations/README.md) for Cursor and Claude Code hook installation.
 
 ## Cursor / MCP client (`mcp.json`)
 

@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      { "command": ".cursor/hooks/memento-session-start.sh" }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": ".cursor/hooks/memento-log-user.sh",
+        "matcher": "UserPromptSubmit"
+      }
+    ],
+    "afterAgentResponse": [
+      {
+        "command": ".cursor/hooks/memento-log-assistant.sh",
+        "matcher": "AgentResponse"
+      }
+    ]
+  }
+}
